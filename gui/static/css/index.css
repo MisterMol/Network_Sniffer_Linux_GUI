@@ -133,3 +133,15 @@ body {
     justify-content: center;
     list-style: none;
 }
+
+/* CSS for the active state of the grab button */
+.grabButton.active {
+    background-color: green; /* Change to desired background color */
+    color: white; /* Change to desired text color */
+}
+
+/* CSS for the active state of the kill button */
+.killButton.active {
+    background-color: red; /* Change to desired background color */
+    color: white; /* Change to desired text color */
+}

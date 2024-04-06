@@ -63,23 +63,44 @@ function storeCheckboxStates() {
     return checkboxStates;
 }
 
-// Functie om de Grab-knop toe te voegen
-function addGrabButton(listItem, hostId, macAddress, ipAddress) {
+// Object to store button states
+var buttonStates = {};
+
+// Function to store button state
+function storeButtonState(hostId, isGrabbing, isKilling) {
+    buttonStates[hostId] = { isGrabbing: isGrabbing, isKilling: isKilling };
+}
+
+
+// Function to add the Grab button
+function addGrabButton(listItem, hostId, macAddress, ipAddress, isGrabbing) {
     var grabButton = $('<button class="grabButton">Grab</button>').appendTo(listItem);
-    grabButton.click(function() {
-        grabHost(hostId, macAddress, ipAddress);
+    if (isGrabbing) {
+        grabButton.addClass('active').text('Stop Grabbing');
+    }
+    grabButton.click(function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        grabHost(hostId, macAddress, ipAddress, !isGrabbing); // Pass the opposite state
+        storeButtonState(hostId, !isGrabbing, buttonStates[hostId] ? buttonStates[hostId].isKilling : false);
     });
 }
 
-// Functie om de Kill-knop toe te voegen
-function addKillButton(listItem, hostId, macAddress, ipAddress) {
+// Function to add the Kill button
+function addKillButton(listItem, hostId, macAddress, ipAddress, isKilling) {
     var killButton = $('<button class="killButton">Kill</button>').appendTo(listItem);
-    killButton.click(function() {
-        killHost(hostId, macAddress, ipAddress);
+    if (isKilling) {
+        killButton.addClass('active').text('Stop Killing');
+    }
+    killButton.click(function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        killHost(hostId, macAddress, ipAddress, !isKilling); // Pass the opposite state
+        storeButtonState(hostId, buttonStates[hostId] ? buttonStates[hostId].isGrabbing : false, !isKilling);
     });
 }
 
-// Functie om de hostlijst bij te werken
+// Function to update host list
 function updateHostList(response, checkboxStates, existingHosts) {
     $.each(response, function(key, value) {
         var listItem = $('#hostList li[data-key="' + key + '"]');
@@ -89,8 +110,8 @@ function updateHostList(response, checkboxStates, existingHosts) {
 
         updateListItemContent(listItem, value);
         updateCheckbox(listItem, value.mac_address, checkboxStates);
-        addGrabButton(listItem, key, value.mac_address, value.ip_address);
-        addKillButton(listItem, key, value.mac_address, value.ip_address);
+        addGrabButton(listItem, key, value.mac_address, value.ip_address, buttonStates[key] ? buttonStates[key].isGrabbing : false);
+        addKillButton(listItem, key, value.mac_address, value.ip_address, buttonStates[key] ? buttonStates[key].isKilling : false);
 
         existingHosts[value.mac_address] = true;
     });
@@ -171,6 +192,10 @@ function grabHost(hostId, macAddress, ipAddress) {
         contentType: 'application/json',
         success: function(response) {
             console.log('Toggle grabbing:', response);
+            // Toggle button state
+            grabButton.toggleClass('active').text(isActive ? 'Grab' : 'Stop Grabbing');
+            // Store button state
+            storeButtonState(hostId, grabButton.hasClass('active'), buttonStates[hostId] ? buttonStates[hostId].isKilling : false);
         },
         error: function(xhr, status, error) {
             console.error('Error toggling grabbing:', error);
@@ -179,12 +204,13 @@ function grabHost(hostId, macAddress, ipAddress) {
     });
 }
 
-
 function killHost(hostId, macAddress, ipAddress) {
-    var killButton = $('<button class="killButton">Kill</button>').appendTo(listItem);
-
+    var killButton = $('#hostList li[data-key="' + hostId + '"] .killButton');
+    
+    // Check if the button is currently active
     var isActive = killButton.hasClass('active');
-    // Voer de logica uit om de host te 'killen'
+    
+    // Send request to toggle killing
     $.ajax({
         type: 'POST',
         url: isActive ? '/stop_kill_host' : '/kill_host',
@@ -195,15 +221,19 @@ function killHost(hostId, macAddress, ipAddress) {
         }),
         contentType: 'application/json',
         success: function(response) {
-            console.log('Host killed:', response);
-            // Voer eventuele extra logica uit na het 'killen' van de host
+            console.log('Toggle killing:', response);
+            // Toggle button state
+            killButton.toggleClass('active').text(isActive ? 'Kill' : 'Stop Killing');
+            // Store button state
+            storeButtonState(hostId, buttonStates[hostId] ? buttonStates[hostId].isGrabbing : false, killButton.hasClass('active'));
         },
         error: function(xhr, status, error) {
-            console.error('Error killing host:', error);
-            // Voer eventuele foutafhandeling uit
+            console.error('Error toggling killing:', error);
+            // Handle error
         }
     });
 }
+
 
 
 // Function to remove deleted hosts
