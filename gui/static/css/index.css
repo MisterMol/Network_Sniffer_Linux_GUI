@@ -1,0 +1,135 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.navbar {
+    background: #142d4c;
+    color: white;
+    padding: 12px 25px;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    height: auto;
+}
+
+.navbar-icon {
+    width: 95px; /* Set the width and height of the icon */
+    height: 95px;
+    border-radius: 50%; /* Make the icon round */
+    margin-right: 15px; /* Adjust margin as needed */
+    margin-left: 5px;
+    border: 2px solid white; /* Add a 2px solid white border around the icon */
+    transition: box-shadow 0.3s; /* Add a smooth transition effect */
+}
+
+.navbar-icon:hover {
+    box-shadow: 0 0 10px 5px #ADD8E6; /* Add a glowing effect with light blue color */
+}
+
+.title {
+    font-size: 50px; /* Set the font size */
+    font-weight: bold; /* Make the text bold */
+    color: #ffffff; /* Set the text color to white */
+    margin-right: 10px; /* Adjust margin as needed */
+}
+
+.vr {
+    height: 75px;
+    width: 1px;
+    margin-left: 20px;
+    margin-right: 25px;
+    color: white;
+    background-color: white;
+    background: white;
+}
+
+
+.interface-selected-nav {
+    margin-left: 25px;
+}
+
+.applications-container {
+    display: flex;
+    height: auto;
+    margin: 0; /* Remove default margin */
+}
+
+.open-applications {
+    flex: 0.78; /* Take up 80% of the available space */
+    background: #cecece; 
+    padding: 1.5%;
+    margin: 10px;
+    border-radius: 15px;
+}
+
+.hosts {
+    flex: 0.22; /* Take up 20% of the available space */
+    background: #cecece; 
+    padding: 1.5%;
+    margin: 10px;
+    border-radius: 15px;
+
+}
+
+#monitorBtn {
+    margin-left: 25px;
+}
+
+/* Style for discovered hosts */
+#hostList {
+    list-style-type: none;
+    padding: 0;
+}
+  
+#hostList li {
+    margin-bottom: 20px;
+    cursor: pointer;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    transition: background-color 0.3s ease; /* Smooth transition for background color change */
+    border-radius: 10px;
+}
+  
+#hostList li:hover {
+    background: #dfdfdf;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+#hostList li b {
+    display: inline-block;
+    width: 120px; 
+}
+
+.hostCheckbox {
+    margin-right: 5px;
+}
+
+
+
+.card {
+    width: 18rem;
+    margin: 15px;
+    box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+    border-radius: 10px;
+    background: #a2a8d3;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#000a4a",endColorstr="#00ecff",GradientType=1);
+    font-size: large;
+    font-weight: bold;
+}
+
+.card-img-top {
+    width: 100%; /* Ensure image takes up full width of its container */
+    height: 10rem; /* Set desired height */
+    object-fit: contain; /* Ensure entire image fits within container */
+    padding-top: 2.5%;
+}
+
+#applicationList {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: space-evenly;
+    justify-content: center;
+    list-style: none;
+}

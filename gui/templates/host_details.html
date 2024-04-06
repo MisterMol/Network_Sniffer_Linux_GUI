@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Monitor Athena</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<<body>
+    <nav class="navbar sticky-top">
+        <form class="form-inline" id="monitorForm">
+            <img src="/static/images/Athena.jpeg" alt="Athena Icon" class="navbar-icon">
+            <h1 class="title">Athena</h1>
+            <div class="vr"></div> <!-- Vertical divider -->
+            <button id="monitorBtn" class="btn btn-success" type="button">Start Monitor</button>
+            <span class="interface-selected-nav"><span class="font-weight-bold">Selected Interface:</span> {{ interface }}</span>
+        </form>
+    </nav>
+
+    <!-- Host details section -->
+    <div class="container mt-4">
+        <h2>Host Details</h2>
+        <div>
+            <p><strong>Hostname:</strong> {{ host_info.hostname }}</p>
+            <p><strong>IP Address:</strong> {{ host_info.ip_address }}</p>
+            <p><strong>MAC Address:</strong> {{ host_info.mac_address }}</p>
+            <p><strong>Vendor:</strong> {{ host_info.vendor }}</p>
+        </div>
+    </div>
+
+    <!-- Logs section -->
+    <div class="container mt-4">
+        <h2>Logs</h2>
+        <div id="logs">
+            <!-- Log messages will be displayed here -->
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/javascript.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+</body>
+
+</html>

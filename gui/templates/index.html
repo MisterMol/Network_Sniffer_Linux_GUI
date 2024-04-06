@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Monitor Athena</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <nav class="navbar sticky-top">
+        <form class="form-inline" id="monitorForm">
+            <img src="/static/images/Athena.jpeg" alt="Athena Icon" class="navbar-icon">
+            <h1 class="title">Athena</h1>
+            <div class="d-flex">
+                <div class="vr"></div>
+            </div>
+            <button id="monitorBtn" class="btn btn-success" type="button">Start Monitor</button>
+            <span class="interface-selected-nav"><span class="font-weight-bold">Selected Interface:</span> {{ interface }}</span>
+        </form>
+    </nav>
+    <div class="applications-container">
+        <div class="open-applications">
+            <h2>Applications:</h2>
+            <ul id="applicationList"></ul>
+        </div>
+        <div class="hosts">
+            <h3>Discovered Hosts</h3>
+            <ul id="hostList"></ul>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/javascript.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+</body>
+</html>
