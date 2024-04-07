@@ -9,12 +9,13 @@ import sys
 import csv
 import socket
 import tldextract
-from arp_spoof_MITM import run_arpspoof, stop_sniffing
+from arp_spoof_MITM import run_arpspoof, stop_arpspoof
 import os
 import datetime
 import ipaddress
 import re
 import subprocess
+from multiprocessing import Queue
 
 
 ###################################################################################################
@@ -96,6 +97,10 @@ skip_display_mac_address = []
 
 # PARAMETERS
 COUNTDOWN_TIMER = 25
+
+# QUEUE MITM ATTACK
+stop_queue = Queue()
+
 
 # FLASK
 app = Flask(__name__)
@@ -225,6 +230,8 @@ def sending_host_dictionary_to_javascript():
 
 @app.route('/send_host_information_dict')
 def sending_host_information_dictionary_to_javascript():
+    print(active_spoofing_threads)
+
     dict_to_send = {}
     sorted_host_information = sorted(active_dict.items())
     
@@ -269,6 +276,37 @@ def host_details():
     return render_template('host_not_found.html'), 404  
 
 
+@app.route('/stop_grab_host', methods=['POST'])
+def stop_grab_host():
+    ip_address_str = request.json.get('ip_address')
+    print(f"FOUND IP == {ip_address_str}")
+    try:
+        # Check if there's an active thread for the IP address
+        if ip_address_str in active_spoofing_threads:
+            # Retrieve the thread reference from the dictionary
+            thread = active_spoofing_threads[ip_address_str]
+            print(thread)
+            # Set a flag in the thread to signal it to stop
+            thread.stop_flag = True
+            
+            # Optionally, wait for the thread to finish with a timeout
+            thread.join(timeout=1)
+            
+            # Remove the thread reference from the dictionary
+            del active_spoofing_threads[ip_address_str]
+            
+            print(f"Stopped ARP spoofing for {ip_address_str}")
+            
+            # Stop sniffing for the IP address
+            stop_arpspoof(ip_address_str)  
+            
+            return jsonify({'message': f'Stopped ARP spoofing for {ip_address_str}'})
+        else:
+            return jsonify({'message': f'No active ARP spoofing for {ip_address_str} to stop'})
+    except KeyError:
+        return jsonify({'error': f'KeyError: {ip_address_str} not found in active_spoofing_threads'})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 
 @app.route('/grab_host', methods=['POST'])
@@ -283,6 +321,9 @@ def grab_host():
             print(f"{minus_sing} Thread already active for {ip_address}. Skipping...")
             return jsonify({'message': f'Thread already active for {ip_address}. Skipping...'})
 
+        # Initialize attack_status as True
+        attack_status = {ip_address: True}
+
         thread = threading.Thread(target=run_arpspoof, args=(ip_address, gateway_ip, selected_interface)) 
         thread.start()
         print(f"{plus_sign} Threading started, Spoofing IP: {ip_address}")
@@ -294,25 +335,8 @@ def grab_host():
     except Exception as e:
         return jsonify({'error': str(e)})
 
-@app.route('/stop_grab_host', methods=['POST'])
-def stop_grab_host():
-    ip_address = request.json.get('ip_address')
-    try:
-        # Check if there's an active thread for the IP address
-        if ip_address in active_spoofing_threads:
-            # Retrieve the thread from the dictionary
-            thread = active_spoofing_threads[ip_address]
-            # Terminate the thread
-            thread.terminate()
-            # Remove the thread reference from the dictionary
-            del active_spoofing_threads[ip_address]
-            print(f"Stopped ARP spoofing for {ip_address}")
-            stop_sniffing()  # Stop sniffing for the IP address
-            return jsonify({'message': f'Stopped ARP spoofing for {ip_address}'})
-        else:
-            return jsonify({'message': f'No active ARP spoofing for {ip_address} to stop'})
-    except Exception as e:
-        return jsonify({'error': str(e)})
+
+
 
 
 
