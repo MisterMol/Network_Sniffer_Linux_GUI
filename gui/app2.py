@@ -321,9 +321,6 @@ def grab_host():
             print(f"{minus_sing} Thread already active for {ip_address}. Skipping...")
             return jsonify({'message': f'Thread already active for {ip_address}. Skipping...'})
 
-        # Initialize attack_status as True
-        attack_status = {ip_address: True}
-
         thread = threading.Thread(target=run_arpspoof, args=(ip_address, gateway_ip, selected_interface)) 
         thread.start()
         print(f"{plus_sign} Threading started, Spoofing IP: {ip_address}")
