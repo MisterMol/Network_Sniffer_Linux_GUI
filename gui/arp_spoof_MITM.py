@@ -26,9 +26,46 @@ def port_forward_commands(target_ip, gateway_ip):
 
 def kill_host(target_ip):
     kill_host_commands = [
-        f"iptables -A FORWARD -s {target_ip} -j DROP",
+        f"iptables -C FORWARD -s {target_ip} -j DROP || iptables -A FORWARD -s {target_ip} -j DROP",  # Check if rule exists, if not add
+        f"iptables -C FORWARD -d {target_ip} -j DROP || iptables -A FORWARD -d {target_ip} -j DROP"   # Check if rule exists, if not add
     ]
     return kill_host_commands
+
+def kill_host(target_ip):
+    """
+    Block traffic from/to a specific IP address using iptables rules.
+
+    Args:
+        target_ip (str): The IP address of the host to be blocked.
+    """
+    # Generate iptables commands to block traffic
+    commands = [
+        f"iptables -C FORWARD -s {target_ip} -j DROP || iptables -A FORWARD -s {target_ip} -j DROP",
+        f"iptables -C FORWARD -d {target_ip} -j DROP || iptables -A FORWARD -d {target_ip} -j DROP"
+    ]
+
+    # Execute commands
+    for command in commands:
+        subprocess.run(command, shell=True)
+
+
+
+def stop_kill_host(target_ip):
+    """
+    Unblock traffic from/to a specific IP address by removing iptables rules.
+
+    Args:
+        target_ip (str): The IP address of the host to be unblocked.
+    """
+    # Generate iptables commands to remove rules blocking traffic
+    commands = [
+        f"iptables -D FORWARD -s {target_ip} -j DROP",
+        f"iptables -D FORWARD -d {target_ip} -j DROP"
+    ]
+
+    # Execute commands
+    for command in commands:
+        subprocess.run(command, shell=True)
 
 def arp_spoof_host_IPs(target_ip, gateway_ip, selected_interface):
     """

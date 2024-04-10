@@ -334,8 +334,12 @@ def grab_host():
 
 
 
-
-
+@app.route('/stop_kill_host', methods=['POST'])
+def stop_kill_host(ip_address):
+    host_id = request.json.get('host_id')  # Haal het host_id op uit het POST-verzoek
+    ip_address = request.json.get('ip_address')
+    mac_address = request.json.get('mac_address')
+    return jsonify({'message': f'Host {host_id} Killed.', 'ip_address': ip_address, 'mac_address': mac_address})
 
 # Route voor het 'killen' van een host
 @app.route('/kill_host', methods=['POST'])
