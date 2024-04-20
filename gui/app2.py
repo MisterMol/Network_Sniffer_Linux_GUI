@@ -9,7 +9,7 @@ import sys
 import csv
 import socket
 import tldextract
-from arp_spoof_MITM import run_arpspoof, stop_arpspoof
+from arp_spoof_MITM import run_arpspoof, stop_arpspoof, kill_host, stop_kill_host
 import os
 import datetime
 import ipaddress
@@ -335,18 +335,20 @@ def grab_host():
 
 
 @app.route('/stop_kill_host', methods=['POST'])
-def stop_kill_host(ip_address):
+def stop_kill_host_while_mitm(ip_address):
     host_id = request.json.get('host_id')  # Haal het host_id op uit het POST-verzoek
     ip_address = request.json.get('ip_address')
     mac_address = request.json.get('mac_address')
+    stop_kill_host(ip_address)
     return jsonify({'message': f'Host {host_id} Killed.', 'ip_address': ip_address, 'mac_address': mac_address})
 
 # Route voor het 'killen' van een host
 @app.route('/kill_host', methods=['POST'])
-def kill_host():
+def kill_host_while_mitm():
     host_id = request.json.get('host_id')  # Haal het host_id op uit het POST-verzoek
     ip_address = request.json.get('ip_address')
     mac_address = request.json.get('mac_address')
+    kill_host(ip_address)
     return jsonify({'message': f'Host {host_id} Killed.', 'ip_address': ip_address, 'mac_address': mac_address})
 
 

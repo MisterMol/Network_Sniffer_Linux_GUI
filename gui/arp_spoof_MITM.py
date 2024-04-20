@@ -25,13 +25,6 @@ def port_forward_commands(target_ip, gateway_ip):
 
 
 def kill_host(target_ip):
-    kill_host_commands = [
-        f"iptables -C FORWARD -s {target_ip} -j DROP || iptables -A FORWARD -s {target_ip} -j DROP",  # Check if rule exists, if not add
-        f"iptables -C FORWARD -d {target_ip} -j DROP || iptables -A FORWARD -d {target_ip} -j DROP"   # Check if rule exists, if not add
-    ]
-    return kill_host_commands
-
-def kill_host(target_ip):
     """
     Block traffic from/to a specific IP address using iptables rules.
 
@@ -40,8 +33,8 @@ def kill_host(target_ip):
     """
     # Generate iptables commands to block traffic
     commands = [
-        f"iptables -C FORWARD -s {target_ip} -j DROP || iptables -A FORWARD -s {target_ip} -j DROP",
-        f"iptables -C FORWARD -d {target_ip} -j DROP || iptables -A FORWARD -d {target_ip} -j DROP"
+        f"iptables -A FORWARD -s {target_ip} -j DROP",
+        f"iptables -A FORWARD -d {target_ip} -j DROP",
     ]
 
     # Execute commands
